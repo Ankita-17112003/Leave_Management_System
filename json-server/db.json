@@ -1,0 +1,79 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "name": "Admin User",
+      "email": "admin@company.com",
+      "password": "admin123",
+      "role": "admin",
+      "department": "Management",
+      "joinDate": "2024-01-01",
+      "leaveBalance": {
+        "sickLeave": 12,
+        "casualLeave": 10,
+        "earnedLeave": 15
+      }
+    },
+    {
+      "id": "2",
+      "name": "John Employee",
+      "email": "john@example.com",
+      "password": "john123",
+      "role": "employee",
+      "department": "Engineering",
+      "joinDate": "2024-02-01",
+      "leaveBalance": {
+        "sickLeave": null,
+        "casualLeave": 7,
+        "earnedLeave": 15
+      }
+    },
+    {
+      "name": "Ankita Batwal",
+      "email": "ankita@gmail.com",
+      "password": "ankita123",
+      "department": "Engineering",
+      "role": "employee",
+      "joinDate": "2026-02-28",
+      "leaveBalance": {
+        "sickLeave": 12,
+        "casualLeave": 10,
+        "earnedLeave": 15
+      },
+      "id": "cqptQAU"
+    }
+  ],
+  "leaves": [],
+  "departments": [
+    {
+      "id": "1",
+      "name": "Engineering",
+      "manager": "Robert Chen",
+      "employeeCount": 15
+    },
+    {
+      "id": "2",
+      "name": "Human Resources",
+      "manager": "Lisa Anderson",
+      "employeeCount": 5
+    },
+    {
+      "id": "3",
+      "name": "Sales",
+      "manager": "David Miller",
+      "employeeCount": 12
+    },
+    {
+      "id": "4",
+      "name": "Marketing",
+      "manager": "Jennifer Lee",
+      "employeeCount": 8
+    },
+    {
+      "id": "5",
+      "name": "Management",
+      "manager": "Admin User",
+      "employeeCount": 1
+    }
+  ]
+}
