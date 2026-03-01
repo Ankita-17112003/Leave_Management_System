@@ -6,6 +6,7 @@ const LeaveRequestsTable = ({ leaves, onAction, showActions = true, showAll = fa
       case 'approved': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -21,11 +22,11 @@ const LeaveRequestsTable = ({ leaves, onAction, showActions = true, showAll = fa
   const displayLeaves = showAll ? leaves : leaves.slice(0, 5);
 
   return (
-    <div className="overflow-x-auto -mx-4 sm:mx-0">
+    <div className="overflow-x-auto -mx-4 sm:mx-0 ps-4 ">
       <div className="inline-block min-w-full align-middle">
         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
+          <table className=" table min-w-full divide-y divide-gray-300  ">
+            <thead className="bg-gray-50 " >
               <tr>
                 <th className="table-header">Employee</th>
                 <th className="table-header">Department</th>
@@ -50,7 +51,7 @@ const LeaveRequestsTable = ({ leaves, onAction, showActions = true, showAll = fa
                   </td>
                   <td className="table-cell">{formatDate(leave.fromDate)}</td>
                   <td className="table-cell">{formatDate(leave.toDate)}</td>
-                  <td className="table-cell">
+                  <td className="table-cell font-medium">
                     {leave.days || 
                       Math.ceil((new Date(leave.toDate) - new Date(leave.fromDate)) / (1000 * 60 * 60 * 24)) + 1
                     }
@@ -81,7 +82,9 @@ const LeaveRequestsTable = ({ leaves, onAction, showActions = true, showAll = fa
                   )}
                   {showActions && leave.status !== 'pending' && (
                     <td className="table-cell text-gray-400 text-sm">
-                      {leave.status === 'approved' ? '✓ Approved' : '✗ Rejected'}
+                      {leave.status === 'approved' ? '✓ Approved' : 
+                       leave.status === 'rejected' ? '✗ Rejected' : 
+                       '✗ Cancelled'}
                     </td>
                   )}
                 </tr>

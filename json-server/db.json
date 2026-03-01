@@ -23,8 +23,8 @@
       "department": "Engineering",
       "joinDate": "2024-02-01",
       "leaveBalance": {
-        "sickLeave": null,
-        "casualLeave": 7,
+        "sickLeave": 12,
+        "casualLeave": 10,
         "earnedLeave": 15
       }
     },
@@ -36,14 +36,123 @@
       "role": "employee",
       "joinDate": "2026-02-28",
       "leaveBalance": {
-        "sickLeave": 12,
-        "casualLeave": 10,
+        "sickLeave": 10,
+        "casualLeave": 5,
         "earnedLeave": 15
       },
       "id": "cqptQAU"
+    },
+    {
+      "name": "vaibhavi kukkar",
+      "email": "vaibhavi@gmail.com",
+      "password": "vaibhavi123",
+      "department": "Marketing",
+      "id": "3",
+      "role": "employee",
+      "joinDate": "2026-02-28",
+      "leaveBalance": {
+        "sickLeave": 12,
+        "casualLeave": 10,
+        "earnedLeave": 15
+      }
+    },
+    {
+      "name": "Teju pradhan",
+      "email": "teju@gmail.com",
+      "password": "teju123",
+      "department": "Sales",
+      "id": "4",
+      "role": "employee",
+      "joinDate": "2026-03-01",
+      "leaveBalance": {
+        "sickLeave": 12,
+        "casualLeave": 10,
+        "earnedLeave": 15
+      }
+    },
+    {
+      "name": "punam mane",
+      "email": "punam@gmail.com",
+      "password": "punam123",
+      "department": "Management",
+      "id": "5",
+      "role": "employee",
+      "joinDate": "2026-03-01",
+      "leaveBalance": {
+        "sickLeave": 12,
+        "casualLeave": 10,
+        "earnedLeave": 15
+      }
+    },
+    {
+      "name": "Anvi Batwal ",
+      "email": "anvi@gmail.com",
+      "password": "anvi123",
+      "department": "Marketing",
+      "id": "6",
+      "role": "employee",
+      "joinDate": "2026-03-01",
+      "leaveBalance": {
+        "sickLeave": 12,
+        "casualLeave": 10,
+        "earnedLeave": 15
+      }
     }
   ],
-  "leaves": [],
+  "leaves": [
+    {
+      "leaveType": "sickLeave",
+      "fromDate": "2026-03-03",
+      "toDate": "2026-03-04",
+      "reason": "not well better",
+      "days": 2,
+      "userId": "cqptQAU",
+      "userName": "Ankita Batwal",
+      "department": "Engineering",
+      "status": "approved",
+      "appliedDate": "2026-03-01",
+      "id": 1
+    },
+    {
+      "leaveType": "casualLeave",
+      "fromDate": "2026-03-05",
+      "toDate": "2026-03-09",
+      "reason": "personal leave",
+      "days": 5,
+      "userId": "cqptQAU",
+      "userName": "Ankita Batwal",
+      "department": "Engineering",
+      "status": "approved",
+      "appliedDate": "2026-03-01",
+      "id": 2
+    },
+    {
+      "leaveType": "casualLeave",
+      "fromDate": "2026-03-18",
+      "toDate": "2026-03-20",
+      "reason": "brother wedding",
+      "days": 3,
+      "userId": "cqptQAU",
+      "userName": "Ankita Batwal",
+      "department": "Engineering",
+      "status": "rejected",
+      "appliedDate": "2026-03-01",
+      "id": 3
+    },
+    {
+      "leaveType": "casualLeave",
+      "fromDate": "2026-03-10",
+      "toDate": "2026-03-14",
+      "reason": "pppppppppppppppppppppp",
+      "days": 5,
+      "userId": "cqptQAU",
+      "userName": "Ankita Batwal",
+      "department": "Engineering",
+      "status": "cancelled",
+      "appliedDate": "2026-03-01",
+      "id": 4
+    }
+  ],
   "departments": [
     {
       "id": "1",

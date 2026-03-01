@@ -15,7 +15,7 @@ const EmployeeSidebar = ({ activeTab, setActiveTab }) => {
   return (
     <>
       {/* Desktop Sidebar - hidden on mobile */}
-      <div className="hidden md:block w-64 bg-gray-900 text-white fixed h-full">
+      <div className="hidden md:block w-64 bg-gray-900 text-white fixed h-full z-10">
         {/* Logo */}
         <div className="p-6">
           <h2 className="text-2xl font-bold text-primary-400">LeaveMS</h2>

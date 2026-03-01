@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3000';
 
+console.log('🔌 Connecting to JSON Server at:', API_URL);
+
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -14,7 +16,6 @@ api.interceptors.request.use(
   (config) => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user?.id) {
-      // We'll use user id for authorization simulation
       config.headers['X-User-Id'] = user.id;
     }
     return config;
@@ -26,10 +27,8 @@ api.interceptors.request.use(
 
 // Auth Services
 export const authService = {
-  // Login user
   login: async (email, password) => {
     try {
-      // Find user by email
       const response = await api.get(`/users?email=${email}`);
       const users = response.data;
       
@@ -39,12 +38,10 @@ export const authService = {
       
       const user = users[0];
       
-      // Check password (in real app, this would be hashed)
       if (user.password !== password) {
         throw new Error('Invalid password');
       }
       
-      // Remove password before storing in localStorage
       const { password: _, ...userWithoutPassword } = user;
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
       
@@ -54,23 +51,19 @@ export const authService = {
     }
   },
 
-  // Logout user
   logout: () => {
     localStorage.removeItem('user');
   },
 
-  // Get current user
   getCurrentUser: () => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   },
 
-  // Check if user is authenticated
   isAuthenticated: () => {
     return localStorage.getItem('user') !== null;
   },
 
-  // Check user role
   hasRole: (role) => {
     const user = JSON.parse(localStorage.getItem('user'));
     return user?.role === role;
@@ -79,29 +72,31 @@ export const authService = {
 
 // User Services
 export const userService = {
-  // Get all users (admin only)
   getAllUsers: async () => {
     try {
       const response = await api.get('/users');
-      // Remove passwords from response
       return response.data.map(({ password, ...user }) => user);
     } catch (error) {
       throw error;
     }
   },
 
-  // Get user by ID
   getUserById: async (id) => {
     try {
       const response = await api.get(`/users/${id}`);
       const { password, ...userWithoutPassword } = response.data;
+      
+      const currentUser = authService.getCurrentUser();
+      if (currentUser && currentUser.id === id) {
+        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      }
+      
       return userWithoutPassword;
     } catch (error) {
       throw error;
     }
   },
 
-  // Get users by department
   getUsersByDepartment: async (department) => {
     try {
       const response = await api.get(`/users?department=${department}`);
@@ -111,18 +106,29 @@ export const userService = {
     }
   },
 
-  // Add new employee (admin only)
   addEmployee: async (userData) => {
     try {
-      // Check if email already exists
       const checkEmail = await api.get(`/users?email=${userData.email}`);
       if (checkEmail.data.length > 0) {
         throw new Error('Email already exists');
       }
 
-      // Set default leave balance for new employee
+      const allUsers = await api.get('/users');
+      const users = allUsers.data;
+      
+      let maxId = 0;
+      users.forEach(user => {
+        const idNum = parseInt(user.id);
+        if (!isNaN(idNum) && idNum > maxId) {
+          maxId = idNum;
+        }
+      });
+      
+      const nextId = (maxId + 1).toString();
+
       const newUser = {
         ...userData,
+        id: nextId,
         role: 'employee',
         joinDate: new Date().toISOString().split('T')[0],
         leaveBalance: {
@@ -134,24 +140,29 @@ export const userService = {
 
       const response = await api.post('/users', newUser);
       const { password, ...userWithoutPassword } = response.data;
+      
       return userWithoutPassword;
     } catch (error) {
       throw error;
     }
   },
 
-  // Update user
   updateUser: async (id, userData) => {
     try {
       const response = await api.patch(`/users/${id}`, userData);
       const { password, ...userWithoutPassword } = response.data;
+      
+      const currentUser = authService.getCurrentUser();
+      if (currentUser && currentUser.id === id) {
+        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      }
+      
       return userWithoutPassword;
     } catch (error) {
       throw error;
     }
   },
 
-  // Delete user (admin only)
   deleteUser: async (id) => {
     try {
       await api.delete(`/users/${id}`);
@@ -161,7 +172,6 @@ export const userService = {
     }
   },
 
-  // Get all departments
   getDepartments: async () => {
     try {
       const response = await api.get('/departments');
@@ -171,7 +181,6 @@ export const userService = {
     }
   },
 
-  // Get employee leave balance
   getLeaveBalance: async (userId) => {
     try {
       const response = await api.get(`/users/${userId}`);
@@ -181,34 +190,104 @@ export const userService = {
     }
   },
 
-  // Update leave balance (when leave is approved/rejected)
+  recalculateUserBalance: async (userId) => {
+    try {
+      const leavesResponse = await api.get(`/leaves?userId=${userId}&status=approved`);
+      const approvedLeaves = leavesResponse.data;
+      
+      const usedSick = approvedLeaves
+        .filter(l => l.leaveType === 'sickLeave')
+        .reduce((sum, l) => sum + (l.days || 1), 0);
+      
+      const usedCasual = approvedLeaves
+        .filter(l => l.leaveType === 'casualLeave')
+        .reduce((sum, l) => sum + (l.days || 1), 0);
+      
+      const usedEarned = approvedLeaves
+        .filter(l => l.leaveType === 'earnedLeave')
+        .reduce((sum, l) => sum + (l.days || 1), 0);
+
+      const correctBalance = {
+        sickLeave: Math.max(0, 12 - usedSick),
+        casualLeave: Math.max(0, 10 - usedCasual),
+        earnedLeave: Math.max(0, 15 - usedEarned)
+      };
+
+      const response = await api.patch(`/users/${userId}`, {
+        leaveBalance: correctBalance
+      });
+
+      
+      const currentUser = authService.getCurrentUser();
+      if (currentUser && currentUser.id === userId) {
+        currentUser.leaveBalance = correctBalance;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+      }
+      
+      return correctBalance;
+    } catch (error) {
+      console.error('Error recalculating balance:', error);
+      throw error;
+    }
+  },
+
+  recalculateAllBalances: async () => {
+    try {
+     
+      const usersResponse = await api.get('/users');
+      const users = usersResponse.data;
+      const employees = users.filter(u => u.role === 'employee');
+      
+      for (const emp of employees) {
+        await userService.recalculateUserBalance(emp.id);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error recalculating balances:', error);
+      throw error;
+    }
+  },
+
   updateLeaveBalance: async (userId, leaveType, days, action) => {
     try {
-      const user = await api.get(`/users/${userId}`);
-      const currentBalance = user.data.leaveBalance;
+      const userResponse = await api.get(`/users/${userId}`);
+      const user = userResponse.data;
+      const currentBalance = user.leaveBalance;
       
       let updatedBalance;
+      
       if (action === 'approve') {
-        // Deduct leaves when approved
         updatedBalance = {
           ...currentBalance,
-          [leaveType]: currentBalance[leaveType] - days
+          [leaveType]: Math.max(0, currentBalance[leaveType] - days)
         };
-      } else if (action === 'reject' || action === 'cancel') {
-        // Add back leaves when rejected/cancelled
+        console.log(`✅ Approved: Deducted ${days} days from ${leaveType}`);
+      } 
+      else if (action === 'reject' || action === 'cancel') {
         updatedBalance = {
           ...currentBalance,
           [leaveType]: currentBalance[leaveType] + days
         };
-      } else {
+        console.log(`🔄 Rejected/Cancelled: Added back ${days} days to ${leaveType}`);
+      } 
+      else {
         updatedBalance = currentBalance;
       }
 
       const response = await api.patch(`/users/${userId}`, {
         leaveBalance: updatedBalance
       });
+      
+      const currentUser = authService.getCurrentUser();
+      if (currentUser && currentUser.id === userId) {
+        currentUser.leaveBalance = updatedBalance;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+      }
+      
       return response.data.leaveBalance;
     } catch (error) {
+      console.error('Error updating leave balance:', error);
       throw error;
     }
   },
@@ -216,7 +295,6 @@ export const userService = {
 
 // Leave Services
 export const leaveService = {
-  // Get all leave applications
   getAllLeaves: async () => {
     try {
       const response = await api.get('/leaves?_sort=appliedDate&_order=desc');
@@ -226,7 +304,6 @@ export const leaveService = {
     }
   },
 
-  // Get leaves by user ID
   getLeavesByUser: async (userId) => {
     try {
       const response = await api.get(`/leaves?userId=${userId}&_sort=appliedDate&_order=desc`);
@@ -236,7 +313,6 @@ export const leaveService = {
     }
   },
 
-  // Get leaves by department
   getLeavesByDepartment: async (department) => {
     try {
       const response = await api.get(`/leaves?department=${department}&_sort=appliedDate&_order=desc`);
@@ -246,7 +322,6 @@ export const leaveService = {
     }
   },
 
-  // Get leaves by status
   getLeavesByStatus: async (status) => {
     try {
       const response = await api.get(`/leaves?status=${status}&_sort=appliedDate&_order=desc`);
@@ -256,24 +331,20 @@ export const leaveService = {
     }
   },
 
-  // Apply for leave
   applyLeave: async (leaveData) => {
     try {
-      // Calculate number of days
       const fromDate = new Date(leaveData.fromDate);
       const toDate = new Date(leaveData.toDate);
       const days = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) + 1;
 
-      // Get user's current leave balance
-      const user = await api.get(`/users/${leaveData.userId}`);
-      const balance = user.data.leaveBalance;
+      const userResponse = await api.get(`/users/${leaveData.userId}`);
+      const user = userResponse.data;
+      const balance = user.leaveBalance;
 
-      // Check if sufficient leave balance
       if (balance[leaveData.leaveType] < days) {
-        throw new Error(`Insufficient ${leaveData.leaveType} balance`);
+        throw new Error(`Insufficient ${leaveData.leaveType} balance. Available: ${balance[leaveData.leaveType]}, Required: ${days}`);
       }
 
-      // Create leave application
       const newLeave = {
         ...leaveData,
         status: 'pending',
@@ -288,17 +359,42 @@ export const leaveService = {
     }
   },
 
-  // Update leave status (approve/reject)
   updateLeaveStatus: async (leaveId, status, userId, leaveType, days) => {
     try {
-      // Update leave status
+      const currentLeaveResponse = await api.get(`/leaves/${leaveId}`);
+      const currentLeave = currentLeaveResponse.data;
+      const previousStatus = currentLeave.status;
+      
+      console.log(`Updating leave ${leaveId} from ${previousStatus} to ${status}`);
+
       const response = await api.patch(`/leaves/${leaveId}`, { status });
       
-      // Update user's leave balance
-      if (status === 'approved') {
+      if (status === 'approved' && previousStatus !== 'approved') {
         await userService.updateLeaveBalance(userId, leaveType, days, 'approve');
-      } else if (status === 'rejected') {
+      }
+      else if (status === 'rejected' && previousStatus === 'approved') {
         await userService.updateLeaveBalance(userId, leaveType, days, 'reject');
+      }
+      else if (status === 'cancelled' && previousStatus === 'approved') {
+        await userService.updateLeaveBalance(userId, leaveType, days, 'cancel');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error updating leave status:', error);
+      throw error;
+    }
+  },
+
+  cancelLeave: async (leaveId, userId, leaveType, days) => {
+    try {
+      const currentLeaveResponse = await api.get(`/leaves/${leaveId}`);
+      const currentLeave = currentLeaveResponse.data;
+      
+      const response = await api.patch(`/leaves/${leaveId}`, { status: 'cancelled' });
+      
+      if (currentLeave.status === 'approved') {
+        await userService.updateLeaveBalance(userId, leaveType, days, 'cancel');
       }
       
       return response.data;
@@ -307,44 +403,67 @@ export const leaveService = {
     }
   },
 
-  // Cancel leave application (employee only for pending leaves)
-  cancelLeave: async (leaveId, userId, leaveType, days) => {
+  deleteLeave: async (leaveId) => {
     try {
-      const response = await api.patch(`/leaves/${leaveId}`, { status: 'cancelled' });
-      await userService.updateLeaveBalance(userId, leaveType, days, 'cancel');
-      return response.data;
+      const leaveResponse = await api.get(`/leaves/${leaveId}`);
+      const leave = leaveResponse.data;
+      
+      await api.delete(`/leaves/${leaveId}`);
+      
+      if (leave.status === 'approved') {
+        await userService.recalculateUserBalance(leave.userId);
+        console.log(`✅ Recalculated balance for user ${leave.userId} after leave deletion`);
+      }
+      
+      return true;
     } catch (error) {
+      console.error('Error deleting leave:', error);
       throw error;
     }
   },
 
-  // Get leave statistics
+  syncBalancesWithLeaves: async () => {
+    try {
+      console.log('🔄 Syncing all balances with leaves...');
+      await userService.recalculateAllBalances();
+      return true;
+    } catch (error) {
+      console.error('Error syncing balances:', error);
+      throw error;
+    }
+  },
+
   getLeaveStatistics: async () => {
     try {
-      const leaves = await api.get('/leaves');
-      const data = leaves.data;
+      const leavesResponse = await api.get('/leaves');
+      const usersResponse = await api.get('/users');
+      
+      const leaves = leavesResponse.data;
+      const users = usersResponse.data.filter(u => u.role === 'employee');
       
       const statistics = {
-        total: data.length,
-        pending: data.filter(l => l.status === 'pending').length,
-        approved: data.filter(l => l.status === 'approved').length,
-        rejected: data.filter(l => l.status === 'rejected').length,
+        total: leaves.length,
+        pending: leaves.filter(l => l.status === 'pending').length,
+        approved: leaves.filter(l => l.status === 'approved').length,
+        rejected: leaves.filter(l => l.status === 'rejected').length,
+        cancelled: leaves.filter(l => l.status === 'cancelled').length,
         byDepartment: {},
         byType: {
-          sickLeave: data.filter(l => l.leaveType === 'sickLeave').length,
-          casualLeave: data.filter(l => l.leaveType === 'casualLeave').length,
-          earnedLeave: data.filter(l => l.leaveType === 'earnedLeave').length
-        }
+          sickLeave: leaves.filter(l => l.leaveType === 'sickLeave').length,
+          casualLeave: leaves.filter(l => l.leaveType === 'casualLeave').length,
+          earnedLeave: leaves.filter(l => l.leaveType === 'earnedLeave').length
+        },
+        totalEmployees: users.length
       };
 
-      // Group by department
-      data.forEach(leave => {
+      leaves.forEach(leave => {
         if (!statistics.byDepartment[leave.department]) {
           statistics.byDepartment[leave.department] = {
             total: 0,
             pending: 0,
             approved: 0,
-            rejected: 0
+            rejected: 0,
+            cancelled: 0
           };
         }
         statistics.byDepartment[leave.department].total++;

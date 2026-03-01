@@ -3,7 +3,7 @@ import { userService } from '../../services/api';
 import toast from 'react-hot-toast';
 import AddEmployeeModal from './AddEmployeeModal';
 
-const EmployeesTable = ({ employees, onRefresh }) => {
+const EmployeesTable = ({ employees, onRefresh, onEmployeeClick }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -74,23 +74,37 @@ const EmployeesTable = ({ employees, onRefresh }) => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredEmployees.map((emp) => (
                   <tr key={emp.id} className="hover:bg-gray-50">
-                    <td className="table-cell font-medium">{emp.name}</td>
-                    <td className="table-cell">{emp.email}</td>
-                    <td className="table-cell">{emp.department}</td>
-                    <td className="table-cell">
-                      {new Date(emp.joinDate).toLocaleDateString()}
-                    </td>
-                    <td className="table-cell">
-                      <div className="text-xs sm:text-sm">
-                        <span className="text-blue-600">S: {emp.leaveBalance.sickLeave}</span> | 
-                        <span className="text-green-600"> C: {emp.leaveBalance.casualLeave}</span> | 
-                        <span className="text-purple-600"> E: {emp.leaveBalance.earnedLeave}</span>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                      
+                        <div>
+                          {/* Clickable Employee Name */}
+                          <button
+                            onClick={() => onEmployeeClick(emp)}
+                            className="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline text-left"
+                          >
+                            {emp.name}
+                          </button>
+                          {/* <p className="text-xs text-gray-500">ID: {emp.id}</p> */}
+                        </div>
                       </div>
                     </td>
-                    <td className="table-cell">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{emp.email}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{emp.department}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(emp.joinDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-wrap gap-1">
+                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">S:{emp.leaveBalance?.sickLeave || 0}</span>
+                        <span className="px-2 py-1 text-xs bg-green-100 text-green-600 rounded-full">C:{emp.leaveBalance?.casualLeave || 0}</span>
+                        <span className="px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">E:{emp.leaveBalance?.earnedLeave || 0}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => handleDeleteEmployee(emp.id, emp.name)}
-                        className="text-red-600 hover:text-red-900 text-sm"
+                        className="text-red-600 hover:text-red-900 text-sm font-medium"
                       >
                         Delete
                       </button>

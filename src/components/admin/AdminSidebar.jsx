@@ -9,7 +9,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: '📊' },
     { id: 'employees', label: 'Employees', icon: '👥' },
-    { id: 'leaves', label: 'Leave Requests', icon: '📋', badge: '3' },
+    { id: 'leaves', label: 'Leave Requests', icon: '📋'},
     { id: 'departments', label: 'Departments', icon: '🏢' },
     { id: 'reports', label: 'Reports', icon: '📈' },
   ];

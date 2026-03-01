@@ -12,9 +12,9 @@ const ApplyLeaveModal = ({ onClose, onSubmit, leaveBalance }) => {
   const [calculatedDays, setCalculatedDays] = useState(0);
 
   const leaveTypes = [
-    { id: 'sickLeave', name: 'Sick Leave', balance: leaveBalance?.sickLeave || 0 },
-    { id: 'casualLeave', name: 'Casual Leave', balance: leaveBalance?.casualLeave || 0 },
-    { id: 'earnedLeave', name: 'Earned Leave', balance: leaveBalance?.earnedLeave || 0 },
+    { id: 'sickLeave', name: 'Sick Leave', balance: leaveBalance?.sickLeave || 12 },
+    { id: 'casualLeave', name: 'Casual Leave', balance: leaveBalance?.casualLeave || 10 },
+    { id: 'earnedLeave', name: 'Earned Leave', balance: leaveBalance?.earnedLeave || 15 },
   ];
 
   const calculateDays = (from, to) => {
@@ -72,9 +72,10 @@ const ApplyLeaveModal = ({ onClose, onSubmit, leaveBalance }) => {
         newErrors.toDate = 'End date cannot be before start date';
       }
 
+      // Check leave balance before applying
       const selectedLeave = leaveTypes.find(l => l.id === formData.leaveType);
       if (selectedLeave && calculatedDays > selectedLeave.balance) {
-        newErrors.leaveType = `Insufficient balance. You have only ${selectedLeave.balance} days left`;
+        newErrors.leaveType = `Insufficient balance. You have only ${selectedLeave.balance} days left, but requesting ${calculatedDays} days`;
       }
     }
 
@@ -98,6 +99,8 @@ const ApplyLeaveModal = ({ onClose, onSubmit, leaveBalance }) => {
       });
     }
   };
+
+  const selectedLeaveType = leaveTypes.find(l => l.id === formData.leaveType);
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4">
@@ -175,6 +178,11 @@ const ApplyLeaveModal = ({ onClose, onSubmit, leaveBalance }) => {
               <p className="text-sm text-blue-800">
                 Total Days: <span className="font-bold">{calculatedDays}</span>
               </p>
+              {selectedLeaveType && (
+                <p className="text-xs text-blue-600 mt-1">
+                  Balance after approval: {selectedLeaveType.balance - calculatedDays} days
+                </p>
+              )}
             </div>
           )}
 
